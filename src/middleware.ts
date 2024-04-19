@@ -22,7 +22,7 @@ async function getRegionMap() {
       (res) => res.json()
     )
 
-    console.log(regions)
+    console.log("regions===>",regions)
 
     if (!regions) {
       notFound()
