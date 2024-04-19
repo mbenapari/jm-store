@@ -8,42 +8,43 @@ const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
 const regionMapCache = {
   regionMap: new Map<string, Region>(),
   regionMapUpdated: Date.now(),
-};
+}
 
 async function getRegionMap() {
-  const { regionMap, regionMapUpdated } = regionMapCache;
+  const { regionMap, regionMapUpdated } = regionMapCache
 
   const shouldFetchRegions =
-    regionMap.size === 0 ||
-    regionMapUpdated < Date.now() - 3600 * 1000;
+    regionMap.size === 0 || regionMapUpdated < Date.now() - 3600 * 1000
 
   if (shouldFetchRegions) {
     try {
-      const response = await fetch('http://201.145.245.35.bc.googleusercontent.com:9000/store/regions');
-      const { regions } = await response.json();
+      const response = await fetch(
+        "http://201.145.245.35.bc.googleusercontent.com:9000/store/regions"
+      )
+      console.log(response)
+      const { regions } = await response.json()
 
-      console.log(regions);
+      console.log(regions)
 
       if (!regions) {
-        notFound();
+        notFound()
       }
 
       regions.forEach((region: Region) => {
         region.countries.forEach((c) => {
-          regionMap.set(c.iso_2, region);
-        });
-      });
+          regionMap.set(c.iso_2, region)
+        })
+      })
 
-      regionMapCache.regionMapUpdated = Date.now();
+      regionMapCache.regionMapUpdated = Date.now()
     } catch (error) {
-      console.error('Error fetching regions:', error);
+      console.error("Error fetching regions:", error)
       // Handle error appropriately
     }
   }
 
-  return regionMap;
+  return regionMap
 }
-
 
 /**
  * Fetches regions from Medusa and sets the region cookie.
