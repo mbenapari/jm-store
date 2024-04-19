@@ -18,12 +18,37 @@ async function getRegionMap() {
     regionMapUpdated < Date.now() - 3600 * 1000
   ) {
     // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
+    var responseClone:any;
     const { regions } = await fetch(
       `http://201.145.245.35.bc.googleusercontent.com:9000/store/regions`
-    ).then((res) => {
-      console.log("the response", res)
-      return res.json()
-    })
+    )
+      .then((res) => {
+        responseClone = res.clone()
+        return res.json()
+      })
+      .then(
+        function (data) {
+          // Do something with data
+          return data
+        },
+        function (rejectionReason) {
+          // 3
+          console.log(
+            "Error parsing JSON from response:",
+            rejectionReason,
+            responseClone
+          ) // 4
+          responseClone
+            .text() // 5
+            .then(function (bodyText) {
+              console.log(
+                "Received the following instead of valid JSON:",
+                bodyText
+              ) // 6
+            })
+            return null
+        }
+      )
 
     if (!regions) {
       notFound()
