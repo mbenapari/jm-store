@@ -17,31 +17,25 @@ async function getRegionMap() {
     !regionMap.keys().next().value ||
     regionMapUpdated < Date.now() - 3600 * 1000
   ) {
-    try {
-      // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
-      const response = await fetch(
-        `http://201.145.245.35.bc.googleusercontent.com:9000/store/regions`
-      )
+    // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
+    const { regions } = await fetch(`http://201.145.245.35.bc.googleusercontent.com:9000/store/regions`).then(
+      (res) => res.json()
+    )
 
-      const { regions } = await response.json()
+    console.log(regions)
 
-      console.log(regions)
-
-      if (!regions) {
-        notFound()
-      }
-
-      // Create a map of country codes to regions.
-      regions.forEach((region: Region) => {
-        region.countries.forEach((c) => {
-          regionMapCache.regionMap.set(c.iso_2, region)
-        })
-      })
-
-      regionMapCache.regionMapUpdated = Date.now()
-    } catch (error) {
-      console.error("Error fetchig regions: ", error)
+    if (!regions) {
+      notFound()
     }
+
+    // Create a map of country codes to regions.
+    regions.forEach((region: Region) => {
+      region.countries.forEach((c) => {
+        regionMapCache.regionMap.set(c.iso_2, region)
+      })
+    })
+
+    regionMapCache.regionMapUpdated = Date.now()
   }
 
   return regionMapCache.regionMap
