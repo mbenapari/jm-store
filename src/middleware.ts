@@ -8,38 +8,42 @@ const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
 const regionMapCache = {
   regionMap: new Map<string, Region>(),
   regionMapUpdated: Date.now(),
-}
+};
 
 async function getRegionMap() {
-  const { regionMap, regionMapUpdated } = regionMapCache
+  const { regionMap, regionMapUpdated } = regionMapCache;
 
-  if (
-    !regionMap.keys().next().value ||
-    regionMapUpdated < Date.now() - 3600 * 1000
-  ) {
-    // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
-    const { regions } = await fetch(`http://201.145.245.35.bc.googleusercontent.com:9000/store/regions`).then(
-      (res) => res.json()
-    )
+  const shouldFetchRegions =
+    regionMap.size === 0 ||
+    regionMapUpdated < Date.now() - 3600 * 1000;
 
-    console.log(regions)
+  if (shouldFetchRegions) {
+    try {
+      const response = await fetch('http://201.145.245.35.bc.googleusercontent.com:9000/store/regions');
+      const { regions } = await response.json();
 
-    if (!regions) {
-      notFound()
+      console.log(regions);
+
+      if (!regions) {
+        notFound();
+      }
+
+      regions.forEach((region: Region) => {
+        region.countries.forEach((c) => {
+          regionMap.set(c.iso_2, region);
+        });
+      });
+
+      regionMapCache.regionMapUpdated = Date.now();
+    } catch (error) {
+      console.error('Error fetching regions:', error);
+      // Handle error appropriately
     }
-
-    // Create a map of country codes to regions.
-    regions.forEach((region: Region) => {
-      region.countries.forEach((c) => {
-        regionMapCache.regionMap.set(c.iso_2, region)
-      })
-    })
-
-    regionMapCache.regionMapUpdated = Date.now()
   }
 
-  return regionMapCache.regionMap
+  return regionMap;
 }
+
 
 /**
  * Fetches regions from Medusa and sets the region cookie.
