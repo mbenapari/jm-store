@@ -13,15 +13,16 @@ const regionMapCache = {
 async function getRegionMap() {
   const { regionMap, regionMapUpdated } = regionMapCache
 
-  const shouldFetchRegions =
-    regionMap.size === 0 || regionMapUpdated < Date.now() - 3600 * 1000
-
-  if (shouldFetchRegions) {
+  if (
+    !regionMap.keys().next().value ||
+    regionMapUpdated < Date.now() - 3600 * 1000
+  ) {
     try {
+      // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
       const response = await fetch(
-        "http://201.145.245.35.bc.googleusercontent.com:9000/store/regions"
+        `http://201.145.245.35.bc.googleusercontent.com:9000/store/regions`
       )
-      console.log(response)
+
       const { regions } = await response.json()
 
       console.log(regions)
@@ -30,20 +31,20 @@ async function getRegionMap() {
         notFound()
       }
 
+      // Create a map of country codes to regions.
       regions.forEach((region: Region) => {
         region.countries.forEach((c) => {
-          regionMap.set(c.iso_2, region)
+          regionMapCache.regionMap.set(c.iso_2, region)
         })
       })
 
       regionMapCache.regionMapUpdated = Date.now()
     } catch (error) {
-      console.error("Error fetching regions:", error)
-      // Handle error appropriately
+      console.error("Error fetchig regions: ", error)
     }
   }
 
-  return regionMap
+  return regionMapCache.regionMap
 }
 
 /**
