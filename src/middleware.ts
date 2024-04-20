@@ -28,7 +28,7 @@ async function getRegionMap() {
       }
     ).then((res) => {
       responseClone = res.clone()
-      console.log("res clone===> ", responseClone)
+      console.log("res clone===> ", responseClone.message)
       return res.json()
     })
     // const regions = [
